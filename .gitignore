@@ -1,0 +1,27 @@
+node_modules/
+dist/
+
+# Secrets - never commit
+.env
+.env.*
+!.env.example
+
+# Generated test output
+reports/
+reports-archive/
+logs/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Local browser-automation session artifacts (accessibility snapshots from
+# exploratory MCP sessions) - not part of the framework, don't share.
+.playwright-mcp/
+
+# Claude Code: per-developer local settings (e.g. MCP server approvals) -
+# .claude/settings.json (shared/team config) is still committed.
+.claude/settings.local.json
+
+# Editor/OS
+.DS_Store

@@ -1,0 +1,77 @@
+name: API Tests (Petstore)
+
+# Manual trigger only - deliberately no push/pull_request/schedule triggers.
+# These tests hit the public https://petstore.swagger.io demo API and create
+# real (if disposable) data on a shared third-party server, so they're run
+# on demand rather than on every commit.
+on:
+  workflow_dispatch: {}
+
+env:
+  NODE_ENV: test
+  CI: true
+  CI_BUILD_ID: ${{ github.run_id }}
+  CI_COMMIT_SHA: ${{ github.sha }}
+  BASE_URL: ${{ vars.BASE_URL }}
+  API_BASE_URL: ${{ vars.API_BASE_URL }}
+
+jobs:
+  api-tests:
+    name: Run Petstore API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run validate:env
+
+      # Pure HTTP tests via Playwright's request fixture - no browser binaries
+      # needed, unlike the UI project.
+      - name: Run API tests and archive reports
+        run: npm run test:ci -- --project=api
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-playwright-report
+          path: reports/html
+          retention-days: 30
+
+      - name: Upload archived reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-reports-archive
+          path: reports-archive
+          retention-days: 90
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Petstore API Test Run" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/results.json ]; then
+            node -e "
+              const r = require('./reports/results.json');
+              let total=0, passed=0, failed=0;
+              const walk = (suites) => (suites||[]).forEach(s => {
+                (s.specs||[]).forEach(spec => (spec.tests||[]).forEach(t => {
+                  total++;
+                  const status = t.status || (t.results && t.results[t.results.length-1]?.status);
+                  if (status === 'expected') passed++;
+                  else if (status === 'unexpected') failed++;
+                }));
+                walk(s.suites);
+              });
+              walk(r.suites);
+              console.log(\`- Total: \${total}\n- Passed: \${passed}\n- Failed: \${failed}\`);
+            " >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "::error::Petstore API test run failed - see uploaded report artifact for details."

@@ -1,0 +1,14 @@
+{
+  "product": {
+    "expectedTitle": "Samsung galaxy s6"
+  },
+  "flights": {
+    "from": "PNQ",
+    "to": "BOM",
+    "month": "July 2026",
+    "expectedBudget": 10000,
+    "cheapestPriceFound": 9605,
+    "cheapestDates": ["July 16", "July 20", "July 21", "July 23", "July 27"],
+    "averagePrice": 12638
+  }
+}

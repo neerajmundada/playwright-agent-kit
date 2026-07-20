@@ -1,0 +1,43 @@
+{
+  "name": "pw-tests",
+  "description": "Playwright Typescript framework with POM, PAI tests, custom fixtures, auth state and reporting",
+  "authors": "neeraj.mundada",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:api": "playwright test tests/api",
+    "test:ui": "playwright test tests/ui",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:critical": "playwright test --grep @critical",
+    "test:priority": "playwright test --project=priority-gate",
+    "test:ci": "node -r ts-node/register scripts/run-tests-and-archive.ts",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write .",
+    "clean": "rm -rf node_modules/ .cache/ reports/",
+    "validate:env": "node -r ts-node/register scripts/validate-env.ts",
+    "archive:reports": "node -r ts-node/register scripts/archive-reports.ts",
+    "security:scan": "snyk test --severity-threshold=high"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^20.19.43",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "dotenv": "^16.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.6",
+    "joi": "^17.13.0",
+    "prettier": "^3.9.4",
+    "snyk": "^1.1300.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0",
+    "winston": "^3.14.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
