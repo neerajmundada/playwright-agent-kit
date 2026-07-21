@@ -67,7 +67,7 @@ scripts/
   archive-reports.ts       Archives reports/ to reports-archive/<timestamp>/ with retention pruning
   run-tests-and-archive.ts Cross-platform wrapper: runs tests then always archives, even on failure
 .github/workflows/
-  playwright.yml          Auto-runs UI tests on push/PR/schedule/manual
+  playwright.yml          Auto-runs UI tests on push/PR/manual dispatch
   api-tests.yml            Manual-only: runs the Petstore API tests
 playwright.config.ts     Projects: priority-gate, chromium, firefox (UI) + api (independent)
 ```
@@ -164,7 +164,7 @@ The `api` project is intentionally independent - it isn't gated by or dependent 
 
 Two independent GitHub Actions workflows:
 
-- **`.github/workflows/playwright.yml`** - runs on push/PR to `main`/`master`, nightly at 02:00 UTC, and manual dispatch. Validates env, runs an optional Snyk scan, then runs the UI projects only (`priority-gate`, `chromium`, `firefox`), archives and uploads reports, and writes a job summary.
+- **`.github/workflows/playwright.yml`** - runs on push/PR to `main`/`master` and manual dispatch. Validates env, runs an optional Snyk scan, then runs the UI projects only (`priority-gate`, `chromium`, `firefox`), archives and uploads reports, and writes a job summary.
 - **`.github/workflows/api-tests.yml`** - **manual dispatch only** (no push/PR/schedule trigger). Runs the `api` project against the live Petstore service, since it's a shared third-party demo server and creates real (if disposable) data - trigger it from the Actions tab when you want to check the API suite. Uploads its own reports and writes a job summary.
 
 Required repo configuration for CI: repository variables `BASE_URL`, `API_BASE_URL`; optionally the repository secret `SNYK_TOKEN` (the security-scan job skips itself with a warning if absent).

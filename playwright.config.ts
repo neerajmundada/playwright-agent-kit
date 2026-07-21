@@ -18,6 +18,23 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 const CHROMIUM_MAXIMIZED = { args: ["--start-maximized"] };
 const FIREFOX_MAXIMIZED_VIEWPORT = { width: 1920, height: 1080 };
 
+// CI runners (GitHub-hosted ubuntu-latest) have no display server, so a
+// headed/maximized launch crashes immediately with "Missing X server or
+// $DISPLAY". Locally we want the maximized, visible window for debugging;
+// in CI we want plain headless with each device preset's default viewport.
+const IS_CI = !!process.env.CI;
+const CHROMIUM_USE = IS_CI
+  ? { ...devices["Desktop Chrome"] }
+  : {
+      ...devices["Desktop Chrome"],
+      viewport: null,
+      deviceScaleFactor: undefined,
+      launchOptions: CHROMIUM_MAXIMIZED,
+    };
+const FIREFOX_USE = IS_CI
+  ? { ...devices["Desktop Firefox"] }
+  : { ...devices["Desktop Firefox"], viewport: FIREFOX_MAXIMIZED_VIEWPORT };
+
 export default defineConfig({
   testDir: "./tests",
   expect: {
@@ -42,7 +59,7 @@ export default defineConfig({
     video: "retain-on-failure",
     screenshot: "only-on-failure",
     ignoreHTTPSErrors: true,
-    headless: false,
+    headless: IS_CI,
   },
   projects: [
     // Priority gate: runs @smoke and @critical UI tests first as a fast-fail
@@ -57,38 +74,19 @@ export default defineConfig({
       name: "priority-gate",
       testDir: "./tests/ui",
       grep: /@smoke|@critical/,
-      use:
-        process.env.BROWSER === "chromium"
-          ? {
-              ...devices["Desktop Chrome"],
-              viewport: null,
-              deviceScaleFactor: undefined,
-              launchOptions: CHROMIUM_MAXIMIZED,
-            }
-          : {
-              ...devices["Desktop Firefox"],
-              viewport: FIREFOX_MAXIMIZED_VIEWPORT,
-            },
+      use: process.env.BROWSER === "chromium" ? CHROMIUM_USE : FIREFOX_USE,
     },
     {
       name: "chromium",
       testDir: "./tests/ui",
       dependencies: ["priority-gate"],
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: null,
-        deviceScaleFactor: undefined,
-        launchOptions: CHROMIUM_MAXIMIZED,
-      },
+      use: CHROMIUM_USE,
     },
     {
       name: "firefox",
       testDir: "./tests/ui",
       dependencies: ["priority-gate"],
-      use: {
-        ...devices["Desktop Firefox"],
-        viewport: FIREFOX_MAXIMIZED_VIEWPORT,
-      },
+      use: FIREFOX_USE,
     },
     // {
     //   name: "webkit",
