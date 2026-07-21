@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main, master]
   workflow_dispatch:
-  schedule:
-    # Nightly regression run at 02:00 UTC
-    - cron: '0 2 * * *'
 
 env:
   NODE_ENV: test
