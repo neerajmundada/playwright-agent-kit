@@ -5,7 +5,7 @@ description: >
   native `npx playwright` / `npm run` commands - no live browser session or MCP
   round-trip needed. USE FOR: running the full suite or a subset (by project,
   tag, or file), rerunning only failed tests, generating a starting-point test
-  via codegen, opening the HTML report, opening a trace.zip from a past
+  via codegen, opening the Allure report, opening a trace.zip from a past
   failure, checking lint/typecheck, validating .env. DO NOT USE FOR: inspecting
   the CURRENT live DOM of a page when nothing on disk (trace/screenshot/log)
   already explains the failure - that needs the playwright-mcp skill instead.
@@ -59,7 +59,7 @@ npx playwright test --last-failed
 # Repeat a flaky test to gauge stability before declaring it fixed
 npx playwright test tests/ui/product.spec.ts --repeat-each=5
 
-# Run + always archive reports (win or lose) - what CI does
+# Run + always generate the Allure report (win or lose) - what CI does
 npm run test:ci -- --project=priority-gate --project=chromium --project=firefox
 ```
 
@@ -75,9 +75,18 @@ failure you already have, for free, in `reports/test-artifacts/<test-name>/`:
 - `trace.zip` - full trace (DOM snapshots, network, console, actions)
 
 ```bash
-# Open the last HTML report (pass/fail summary, attachments inline)
-npx playwright show-report reports/html
+# Open the last Allure report (pass/fail summary, retries, attachments inline)
+npm run report:allure:generate && npm run report:allure:open
+# or, for a one-shot local view (generates to a temp dir, no separate open step):
+npm run report:allure:serve
+```
 
+**Never open `allure-report/index.html` directly (double-click / `file://`)**
+- it's a single-page app that loads data via `fetch()`, which browsers block
+for local files, so every panel shows "Failed to fetch." Always go through
+one of the two commands above; both start a local HTTP server for you.
+
+```bash
 # Open a specific trace interactively (local web UI - no AI tokens spent)
 npx playwright show-trace "reports/test-artifacts/<test-dir>/trace.zip"
 
@@ -138,7 +147,7 @@ npx tsc --noEmit -p tsconfig.json   # typecheck
 npm run lint                         # ESLint (0 errors is the bar; any-warnings are pre-existing/accepted)
 npm run lint:fix                     # auto-fix formatting
 npm run validate:env                 # check .env against utils/env-validator.ts schema
-npm run archive:reports              # manually archive reports/ -> reports-archive/
+npm run report:allure:generate       # manually generate allure-report/ from allure-results/
 ```
 
 ## When NOT to use this skill

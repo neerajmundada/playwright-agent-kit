@@ -61,9 +61,6 @@ const envSchema = Joi.object({
     .valid("summary", "detailed", "verbose")
     .default("detailed")
     .description("Test report detail level"),
-  ARCHIVE_REPORTS: Joi.boolean()
-    .default(true)
-    .description("Archive test reports"),
 
   // Security
   SKIP_SSL_VERIFICATION: Joi.boolean()
@@ -99,7 +96,6 @@ interface ValidatedEnv {
   TEST_TAGS?: string;
   SMOKE_TESTS_ONLY: boolean;
   REPORT_LEVEL: string;
-  ARCHIVE_REPORTS: boolean;
   SKIP_SSL_VERIFICATION: boolean;
   SECURE_MODE: boolean;
   ARTIFACT_STORAGE_PATH?: string;

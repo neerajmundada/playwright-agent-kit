@@ -62,7 +62,7 @@ token-discipline rules for this repo.
 
 **Default to `playwright-cli`** (native `npx playwright` / `npm run`
 commands) for: running any subset of the suite, rerunning failures,
-generating a code draft via `codegen`, reading the HTML report, opening a
+generating a code draft via `codegen`, reading the Allure report, opening a
 `trace.zip`, checking lint/types, validating `.env`. These cost no live-
 browser tokens and are deterministic.
 

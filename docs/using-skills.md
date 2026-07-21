@@ -69,7 +69,8 @@ does, you could type by hand from `SKILL.md`; the skill just saves you from
 having to remember the flags.
 
 Other things this skill covers (see the file for the full list): running by
-project/tag/file, opening the HTML report (`npx playwright show-report`),
+project/tag/file, opening the Allure report (`npm run report:allure:generate`
++ `report:allure:open`, or `report:allure:serve` for both in one step),
 opening a specific `trace.zip` (`npx playwright show-trace <path>`),
 generating a starting point via `codegen`, and `npm run lint` /
 `npx tsc --noEmit` / `npm run validate:env`.

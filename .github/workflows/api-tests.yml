@@ -31,24 +31,16 @@ jobs:
 
       # Pure HTTP tests via Playwright's request fixture - no browser binaries
       # needed, unlike the UI project.
-      - name: Run API tests and archive reports
+      - name: Run API tests and generate the Allure report
         run: npm run test:ci -- --project=api
 
-      - name: Upload HTML report
+      - name: Upload Allure report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: api-playwright-report
-          path: reports/html
+          name: api-allure-report
+          path: allure-report
           retention-days: 30
-
-      - name: Upload archived reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-reports-archive
-          path: reports-archive
-          retention-days: 90
 
       - name: Write job summary
         if: always()
