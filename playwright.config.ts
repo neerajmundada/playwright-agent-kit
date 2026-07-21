@@ -47,8 +47,13 @@ export default defineConfig({
   workers: process.env.CI ? 4 : undefined,
   reporter: [
     ["list"],
-    ["html", { outputFolder: "reports/html", open: "never" }],
+    // Machine-readable - consumed by the CI job-summary step (see the
+    // workflows), not meant to be browsed directly.
     ["json", { outputFile: "reports/results.json" }],
+    // The human-browsable report. allure-results/ is raw data; run
+    // `npm run report:allure:generate` (or let CI do it) to turn it into the
+    // static site in allure-report/ - see "Reports" in README.md.
+    ["allure-playwright", { outputFolder: "allure-results" }],
   ],
   use: {
     baseURL:

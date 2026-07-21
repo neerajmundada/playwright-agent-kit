@@ -1,12 +1,13 @@
 # Playwright + TypeScript Automation Framework
 
-An enterprise-style Playwright + TypeScript test automation framework covering UI and API testing, with structured logging, typed error handling, retry/circuit-breaker resilience, environment validation, test-data cleanup, priority-gated test execution, report archival, and CI/CD.
+An enterprise-style Playwright + TypeScript test automation framework covering UI and API testing, with structured logging, typed error handling, retry/circuit-breaker resilience, environment validation, test-data cleanup, priority-gated test execution, Allure reporting, and CI/CD.
 
 ## Getting started
 
 ### Prerequisites
 
 - Node.js >= 18 and npm
+- (Optional, to generate/view the Allure report locally) a Java runtime (JRE 8+) - check with `java -version`
 - (Optional, for the AI-assisted workflow below) Claude Code - CLI, desktop app, or IDE extension
 
 ### Install & first run
@@ -64,8 +65,7 @@ utils/
   test-data-manager.ts     Per-test cleanup callback registry
 scripts/
   validate-env.ts         CLI: validate .env against the schema
-  archive-reports.ts       Archives reports/ to reports-archive/<timestamp>/ with retention pruning
-  run-tests-and-archive.ts Cross-platform wrapper: runs tests then always archives, even on failure
+  run-tests-and-report.ts Cross-platform wrapper: runs tests then always generates the Allure report
 .github/workflows/
   playwright.yml          Auto-runs UI tests on push/PR/manual dispatch
   api-tests.yml            Manual-only: runs the Petstore API tests
@@ -116,9 +116,11 @@ npm run test:api             # API tests only (Petstore)
 npm run test:smoke           # tests tagged @smoke
 npm run test:critical        # tests tagged @critical
 npm run test:priority        # just the priority-gate project (fast smoke/critical check)
-npm run test:ci              # runs tests, then always archives reports/ (even on failure)
+npm run test:ci              # runs tests, then always generates the Allure report (even on failure)
 npm run validate:env         # validate .env against the schema
-npm run archive:reports      # archive reports/ manually
+npm run report:allure:generate   # generate allure-report/ from allure-results/
+npm run report:allure:open       # open the generated allure-report/ in a browser
+npm run report:allure:serve      # generate + open in one step (temp dir, local dev only)
 npm run lint / lint:fix       # ESLint
 npm run security:scan        # Snyk scan (requires SNYK_TOKEN)
 ```
@@ -155,17 +157,38 @@ The `api` project is intentionally independent - it isn't gated by or dependent 
 - `utils/errors.ts` - `TestAutomationError` base class plus `PageNavigationError`, `ElementInteractionError`, `TestDataError`, `APIError`, `ConfigurationError`, `TimeoutError`. Every error carries a code, status code, retryability flag, and structured context, and is logged on construction.
 - `utils/retry.ts` - `withRetry()` (exponential backoff with jitter, only retries errors flagged `isRetryable`) and `CircuitBreaker` (fails fast after repeated failures against a dependency).
 
-## Reports & archival
+## Reports
 
-- Playwright reports go to `reports/` (`html/`, `results.json`).
-- `npm run test:ci` (and the CI workflows) always run `scripts/archive-reports.ts` afterward - win or lose - which copies the run into `reports-archive/<timestamp>_<buildId>/` with a pass/fail/flaky summary in `metadata.json`, and prunes old archives beyond `ARCHIVE_RETENTION_COUNT` (default 30).
+- `reports/results.json` - machine-readable output (the `json` reporter), consumed by the CI job-summary step. Not meant to be browsed directly.
+- **Allure** is the human-browsable report. Every run writes raw results to `allure-results/` (the `allure-playwright` reporter, configured in `playwright.config.ts`); turn that into the static site in `allure-report/` with:
+
+  ```bash
+  npm run report:allure:generate   # allure-results/ -> allure-report/
+  npm run report:allure:open       # open allure-report/ in a browser
+
+  # or, for local dev, one command that does both against a temp dir:
+  npm run report:allure:serve
+  ```
+
+  **Always open it via one of the commands above - never double-click
+  `allure-report/index.html` directly.** It's a single-page app that loads
+  its data with `fetch()` calls; opened as a bare `file://` URL, browsers
+  block those requests and every panel shows "Failed to fetch." Both
+  `report:allure:open` and `report:allure:serve` start a local HTTP server
+  for you, which is what makes it work. (Playwright's own native HTML
+  reporter has this same restriction, for the same reason - it's not
+  specific to Allure.)
+
+  Requires a Java runtime (JRE 8+) - `allure-commandline` (a devDependency here) wraps the Java-based Allure CLI. Check with `java -version`; install a JDK/JRE if it's missing.
+- `npm run test:ci` (and both CI workflows) always run `scripts/run-tests-and-report.ts` afterward - win or lose - which runs the tests, then always generates `allure-report/` regardless of pass/fail, then exits with the tests' own exit code.
+- Both `allure-results/` and `allure-report/` are gitignored (generated per run) - CI uploads `allure-report/` as a build artifact instead (see CI/CD below).
 
 ## CI/CD
 
 Two independent GitHub Actions workflows:
 
-- **`.github/workflows/playwright.yml`** - runs on push/PR to `main`/`master` and manual dispatch. Validates env, runs an optional Snyk scan, then runs the UI projects only (`priority-gate`, `chromium`, `firefox`), archives and uploads reports, and writes a job summary.
-- **`.github/workflows/api-tests.yml`** - **manual dispatch only** (no push/PR/schedule trigger). Runs the `api` project against the live Petstore service, since it's a shared third-party demo server and creates real (if disposable) data - trigger it from the Actions tab when you want to check the API suite. Uploads its own reports and writes a job summary.
+- **`.github/workflows/playwright.yml`** - runs on push/PR to `main`/`master` and manual dispatch. Validates env, runs an optional Snyk scan, then runs the UI projects only (`priority-gate`, `chromium`, `firefox`), uploads the generated `allure-report/` as a build artifact, and writes a job summary.
+- **`.github/workflows/api-tests.yml`** - **manual dispatch only** (no push/PR/schedule trigger). Runs the `api` project against the live Petstore service, since it's a shared third-party demo server and creates real (if disposable) data - trigger it from the Actions tab when you want to check the API suite. Uploads its own `allure-report/` artifact and writes a job summary.
 
 Required repo configuration for CI: repository variables `BASE_URL`, `API_BASE_URL`; optionally the repository secret `SNYK_TOKEN` (the security-scan job skips itself with a warning if absent).
 
