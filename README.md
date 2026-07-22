@@ -211,6 +211,18 @@ and structured logs on every failure (see `logs/*.log` and
 those first. The `playwright-mcp` skill only gets used when a selector
 genuinely needs to be re-discovered against the *current* live page.
 
+### Flow
+
+```mermaid
+flowchart TD
+    U["You: write a test, debug a failure,<br/>or heal a broken locator"] --> A["senior-test-engineer agent<br/>(or call a skill directly, no agent)"]
+    A --> Q{"Answerable from reports,<br/>logs, or code already on disk?"}
+    Q -->|"Yes - default path"| CLI["playwright-cli skill<br/>native npx/npm commands<br/>free, deterministic"]
+    Q -->|"No - live page genuinely needed"| MCP["playwright-mcp skill<br/>one live browser snapshot<br/>heal selector / explore new page"]
+    MCP -->|"verify the fix"| CLI
+    CLI --> R["Result: passing test run,<br/>fixed Page Object, or diagnosis"]
+```
+
 ### Setup and usage guides
 
 The skills (`.claude/skills/playwright-cli`, `.claude/skills/playwright-mcp`)
